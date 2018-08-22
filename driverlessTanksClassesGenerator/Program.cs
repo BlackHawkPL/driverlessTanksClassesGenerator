@@ -13,30 +13,13 @@ namespace driverlessTanksClassesGenerator
     {
         static void Main(string[] args)
         {
-            String clipboard = null;
-            Exception threadEx = null;
-            Thread staThread = new Thread(
-                delegate ()
-                {
-                    try
-                    {
-                        clipboard = Clipboard.GetText();
-                    }
-
-                    catch (Exception ex)
-                    {
-                        threadEx = ex;
-                    }
-                });
-            staThread.SetApartmentState(ApartmentState.STA);
-            staThread.Start();
-            staThread.Join();
-            
-            clipboard = clipboard.TrimStart('[');
-            clipboard = clipboard.TrimEnd(']');
-            var classes = clipboard.Split(',');
 
             var path = @"..\..\..";
+            String classFile = File.ReadAllText(path + @"\classes.txt");
+
+            classFile = classFile.TrimStart('[');
+            classFile = classFile.TrimEnd(']');
+            var classes = classFile.Split(',');
 
             var boilerplate = File.ReadAllText(path + @"\configBoilerplate.txt");
             StringBuilder sb = new StringBuilder(boilerplate);
@@ -62,7 +45,7 @@ namespace driverlessTanksClassesGenerator
 
             System.IO.File.WriteAllText($@"{path}\output\config.cpp", result);
 
-            string[] files = { @"$PBOPREFIX$", "init.sqf", "tankInit.sqf", "getInEH.sqf" };
+            string[] files = { @"$PBOPREFIX$", "preInit.sqf", "tankInit.sqf", "getInEH.sqf", "landVehicleInit.sqf" };
             foreach (var file in files) {
                 System.IO.File.Copy($@"{path}\{file}", $@"{path}\output\{file}", true);
             }

@@ -3,7 +3,7 @@ class CfgPatches {
         units[] = {};
         weapons[] = {};
         requiredVersion = 0.1;
-        requiredAddons[] = { "A3_Armor_F" };
+        requiredAddons[] = { "A3_Armor_F", "cba_main" };
         version = 1;
     };
 };
@@ -12,16 +12,19 @@ class Extended_PreInit_EventHandlers
 {
 	class noDrivers
 	{
-	    init="call compile preprocessFileLineNumbers '\bh_noDrivers\init.sqf'";
-
+	    init="call compile preprocessFileLineNumbers '\bh_noDrivers\preInit.sqf'";
     };
 };
+
 class Extended_InitPost_EventHandlers
 {
 	class Tank
 	{
 	    init="call compile preprocessFileLineNumbers '\bh_noDrivers\tankInit.sqf'";
-
+    };
+	class LandVehicle
+	{
+	    init="call compile preprocessFileLineNumbers '\bh_noDrivers\landVehicleInit.sqf'";
     };
 };
 
@@ -30,8 +33,39 @@ class Extended_getIn_EventHandlers
 	class Tank
 	{
 	    getin="call compile preprocessFileLineNumbers '\bh_noDrivers\getInEH.sqf'";
-
     };
+};
+
+class Cfg3DEN
+{
+	class Object
+	{
+		class AttributeCategories
+		{
+			class BH_aiDrivers
+			{
+				displayName = "AI Crew";
+				collapsed = 1;
+				class Attributes
+				{
+					class BH_enableAiDriver
+					{
+						displayName = "Enable adding AI driver";
+						tooltip = "Units in turret positions will get ACE interact option to spawn in an AI driver, Abrams will get option for AI loader";
+						property = "BH_enabledAiDriver";
+						control = "Checkbox";
+
+						expression = "_this setVariable ['BH_enableAiDriver',_value];";
+
+						defaultValue = "false";
+
+						unique = 0;
+						condition = "objectVehicle";
+					};
+				};
+			};
+		};
+	};
 };
 
 class cfgVehicles

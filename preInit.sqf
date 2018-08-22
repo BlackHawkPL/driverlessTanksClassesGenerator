@@ -163,6 +163,59 @@ BH_aidrivers_fnc_toggleDriverCam = {
     };
 };
 
+BH_aidrivers_addAiLoader = {
+    params ["_target", "_caller"];
+
+    if (!isNull (_target turretUnit [0,1])) exitWith {};
+    private _turret = (assignedVehicleRole _player) select 1;
+    
+    private _class = "B_Soldier_F";
+    if (side _caller == EAST) then {
+        _class = "O_Soldier_F";
+    };
+    if (side _caller == INDEPENDENT) then {
+        _class = "I_Soldier_F";
+    };
+
+    _unit = createAgent [_class, [0,0,0], [], 0, "CAN_COLLIDE"];
+
+    removeAllWeapons _unit;
+    removeUniform _unit;
+    removeVest _unit;
+    removeHeadgear _unit;
+    removeGoggles _unit;
+    
+    _unit forceAddUniform uniform _caller;
+    _unit addVest vest _caller;
+    _unit addHeadGear headGear _caller;
+    
+    _target setVariable ["BH_aidrivers_loader", _unit, true];
+
+    _unit moveInTurret [_target, [0,1]];
+    _unit setBehaviour "COMBAT";
+    
+    doStop _unit;
+
+    [{vehicle (_this select 0) != _this select 0}, { //waiting for spawned unit to get into vehicle
+        private _pfhID = [{
+            _this select 0 params ["_unit", "_target", "_caller"];
+
+            private _handle = _this select 1;
+            if (!alive _target || !alive _caller || !alive _unit || (vehicle _unit) != _target || (_target turretUnit [0,1]) != _unit) then {
+                
+                if (!isNull _unit) then {
+                    deleteVehicle _unit;
+                    [_handle] remoteExec ["CBA_fnc_removePerFrameHandler", _target];
+                    
+                };
+
+            };
+        }, 1, _this] call CBA_fnc_addPerFrameHandler;
+    }, [_unit, _target, _caller]] call CBA_fnc_WaitUntilAndExecute;
+
+    hint "Loader added";
+};
+
 BH_enableAIDriverLocal = {
     private _vehs = _this;
     if (typeName _vehs != "ARRAY") then {
@@ -216,6 +269,16 @@ BH_enableAIDriverLocal = {
         (!isNil "BH_aidrivers_driverCam" && {!isNull BH_aidrivers_driverCam})
     }] call ace_interact_menu_fnc_createAction;
 
+    //add ai loader action
+    private _addAiLoader = ["ai_driver_add_ai_loader","Add AI loader","",{
+        [_target, _player] call BH_aidrivers_addAiLoader;
+    },
+    {
+        vehicle _player == _target &&
+        ((assignedVehicleRole _player) select 0) == "Turret" &&
+        isNull (_target turretUnit [0,1]) &&
+        isNull (_target getVariable ["BH_aidrivers_loader", objNull])
+    }] call ace_interact_menu_fnc_createAction;
 
     {
         [_x, 1, ["ACE_SelfActions"], _action] call ace_interact_menu_fnc_addActionToObject;
@@ -223,6 +286,9 @@ BH_enableAIDriverLocal = {
         [_x, 1, ["ACE_SelfActions"], _engineOffAction] call ace_interact_menu_fnc_addActionToObject;
         [_x, 1, ["ACE_SelfActions"], _pipAction] call ace_interact_menu_fnc_addActionToObject;
         [_x, 1, ["ACE_SelfActions"], _pipNvAction] call ace_interact_menu_fnc_addActionToObject;
+        if (_x isKindOf "rhsusf_m1a1tank_base") then {
+            [_x, 1, ["ACE_SelfActions"], _addAiLoader] call ace_interact_menu_fnc_addActionToObject;
+        };
     } foreach _vehs;
 
 };
@@ -232,4 +298,3 @@ BH_enableAIDriver = {
 };
 
 BH_aidrivers_AiDriverVehicle = objNull;
-
